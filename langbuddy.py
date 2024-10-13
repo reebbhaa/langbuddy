@@ -66,7 +66,8 @@ def store_user_context(db, user_id, context):
 # Function to retrieve user context
 def get_user_context(db, user_id):
     user_context = db.query(UserContext).filter(UserContext.user_id == user_id).first()
-    
+    print("get_user_context")
+    print(user_context)
     if user_context:
         return user_context.context_data
     return None
@@ -95,20 +96,17 @@ async def handle_all(update: Update, context: CallbackContext):
             # Retrieve the existing context
             user_context = get_user_context(db, user_id)
             if user_context=="" or user_context==None:
-                user_context=f"You are a friendly agent, \
-                with a limited vocabulary of 100 words to \
-                help me practice basic conversational english. \
-                Please try to carry the conversation forward \
-                whenever you can. Try to learn about me, help\
-                me learn things about you. Your name is chatterbot,\
-                you are fun and playful too."
+                user_context=f"You are helping me learn english, \
+                your vocabulary is limited to a 100 simple words. \
+                Your name is chatterbot,\
+                you are fun and playful. Keep your responses short."
             print("user_context")
             print(user_context)
             response_text = await generate_response(transcript, user_context) 
             print("response_text")
             print(response_text)
             # Update the context after the response
-            store_user_context(db, user_id, response_text)
+            store_user_context(db, user_id, user_context+transcript+response_text)
             await send_voice_clip(update, context, response_text)
     else:
         await update.message.reply_text("Unknown message type.")
@@ -154,7 +152,7 @@ async def send_voice_clip(update: Update, context: CallbackContext, text_respons
     # ogg_path = convert_mp3_to_ogg(mp3_path)
 
     # Step 3: Send the OGG file as a voice message
-    with open(ogg_path, 'rb') as ogg_file:
+    with open(mp3_path, 'rb') as ogg_file:
         # await update.message.reply_voice(voice=ogg_file)
         await update.message.reply_voice(voice=mp3_path)
 
@@ -169,6 +167,7 @@ async def generate_response(prompt, user_context, max_tokens=150):
         model="gpt-3.5-turbo",  # Use the chat model
         messages=[
             {"role": "system", "content": user_context},
+            # {"role": "system", "content": },
             {"role": "user", "content": prompt},
         ],
         max_tokens=max_tokens,
