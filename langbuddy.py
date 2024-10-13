@@ -9,14 +9,72 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, fil
 from dotenv import load_dotenv
 from google.cloud import texttospeech, speech_v1
 from pydub import AudioSegment
+from sqlalchemy import create_engine, Text, DateTime
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, DeclarativeBase, mapped_column, Mapped
+from datetime import datetime, timezone
+
 load_dotenv()
 
 OpenAIclient = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 telegram_key=os.getenv("TELEGRAM_KEY")
 
+DATABASE_URL = "postgresql://telegram_bot_user:your_password@localhost:5432/telegram_bot_db"
+
+class Base(DeclarativeBase):
+    pass
+
+# Define the user context model
+class UserContext(Base):
+    __tablename__ = "user_context"
+    
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    user_id: Mapped[str] = mapped_column(index=True)
+    context_data = mapped_column(Text)
+    last_updated = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+# Initialize the database
+def init_db():
+    engine = create_engine(DATABASE_URL)
+    Base.metadata.create_all(bind=engine)
+    return engine
+
+# Create a session
+engine = init_db()
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# Function to store or update user context
+def store_user_context(db, user_id, context):
+    user_context = db.query(UserContext).filter(UserContext.user_id == user_id).first()
+    
+    if user_context:
+        user_context.context_data = context
+        user_context.last_updated = datetime.now(timezone.utc)
+    else:
+        user_context = UserContext(user_id=user_id, context_data=context)
+        db.add(user_context)
+    
+    db.commit()
+
+# Function to retrieve user context
+def get_user_context(db, user_id):
+    user_context = db.query(UserContext).filter(UserContext.user_id == user_id).first()
+    
+    if user_context:
+        return user_context.context_data
+    return None
+    
 async def handle_all(update: Update, context: CallbackContext):
     message = update.message
-    user_id = update.message.from_user.id
+    user_id = str(update.message.from_user.id)
+    db = next(get_db())  # Get a session from the generator
 
     if message.text:
         await update.message.reply_text("You sent a text message.")
@@ -35,10 +93,21 @@ async def handle_all(update: Update, context: CallbackContext):
         transcript=convert_audio_to_text(f"{voice_id}.ogg")
         os.remove(f"{voice_id}.ogg")  # Clean up locally saved file
         if transcript != "":
-            # await update.message.reply_text(transcript)
-            response_text = await generate_response(transcript) 
+            # Retrieve the existing context
+            user_context = get_user_context(db, user_id)
+            if user_context=="" or user_context==None:
+                user_context=f"You are a friendly agent, \
+                with a limited vocabulary of 100 words to \
+                help me practice basic conversational english. \
+                Please try to carry the conversation forward \
+                whenever you can. Try to learn about me, help\
+                me learn things about you. Your name is chatterbot,\
+                you are fun and playful too."
+            print(user_context)
+            response_text = await generate_response(transcript, user_context) 
             print(response_text)
-            # await update.message.reply_text(response_text)
+            # Update the context after the response
+            store_user_context(db, user_id, response_text)
             await send_voice_clip(update, context, response_text)
     else:
         await update.message.reply_text("Unknown message type.")
@@ -91,13 +160,13 @@ def get_context(user_input):
 
     return
 
-async def generate_response(prompt, max_tokens=150):
+async def generate_response(prompt, user_context, max_tokens=150):
     """Generate a response from the AI model based on the agent's personality."""
 
     response = OpenAIclient.chat.completions.create(
         model="gpt-3.5-turbo",  # Use the chat model
         messages=[
-            {"role": "system", "content": f"You are a friendly agent, with a limited vocabulary of 100 words to help me practice basic conversational english. Please try to carry the conversation forward whenever you can. Try to learn about me, help me learn things about you."},
+            {"role": "system", "content": user_context},
             {"role": "user", "content": prompt},
         ],
         max_tokens=max_tokens,
