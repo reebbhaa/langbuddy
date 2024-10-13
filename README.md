@@ -1,67 +1,62 @@
-Language Buddy Bot
-A Telegram bot designed to help users practice conversational English through voice interactions. The bot uses Google Cloud Speech-to-Text for audio transcription and OpenAI's GPT model to generate responses based on the user's input and a personalized context.
+# Language Buddy Bot
 
-Features
-Voice Message Interaction: Users can send voice messages, which the bot transcribes to text.
-Contextual Responses: The bot maintains a context for each user to provide more relevant and personalized responses.
-Text-to-Speech Responses: The bot responds with voice messages synthesized from text using Google Cloud Text-to-Speech.
-Database Storage: User contexts are stored in a PostgreSQL database, allowing the bot to remember user-specific information across sessions.
-Requirements
-Python 3.8+
-Docker (for database setup)
-Telegram Bot Token
-OpenAI API Key
-Google Cloud credentials for Speech-to-Text and Text-to-Speech APIs
-Python packages listed in requirements.txt
-Setup
-Clone the Repository:
+Language Buddy Bot is a Telegram bot designed to help users practice conversational English through voice messages. The bot utilizes OpenAI's GPT-3.5-turbo model for generating responses and Google Cloud's Speech-to-Text and Text-to-Speech services for audio processing.
 
-bash
-Copy code
-git clone https://langbuddy.git
-cd langbuddy
-Create a .env File:
+## Features
 
-Create a file named .env in the project directory and add your Telegram Bot Token and OpenAI API Key:
+- **Voice Message Support**: Users can send voice messages to practice speaking.
+- **Contextual Conversations**: The bot maintains user context to generate personalized responses.
+- **Text-to-Speech**: Converts the bot's text responses into voice messages for a more interactive experience.
+- **Speech-to-Text**: Converts user voice messages into text for processing.
 
-makefile
-Copy code
-TELEGRAM_KEY=your_telegram_bot_token
-OPENAI_API_KEY=your_openai_api_key
-Set Up PostgreSQL Database:
+## Technologies Used
 
-You can use Docker to set up a PostgreSQL database easily:
+- **Python**: The main programming language for the bot.
+- **Telegram Bot API**: For handling messages and interactions.
+- **OpenAI**: For generating conversational responses.
+- **Google Cloud**: For speech recognition and synthesis.
+- **PostgreSQL**: For storing user context data.
 
-bash
-Copy code
-docker-compose up -d
-This will create a PostgreSQL database with the necessary tables.
+## Requirements
 
-Install Dependencies:
+Ensure you have the following installed:
 
-Install the required Python packages:
+- Python 3.12 or higher
+- PostgreSQL
 
-bash
-Copy code
-pip install -r requirements.txt
-Run the Bot:
+## Installation
 
-Execute the following command to start the bot:
+1. Clone the repository:
 
-bash
-Copy code
-python langbuddy.py
-Usage
-Send a /start command to the bot to initiate the conversation.
-After that, you can send voice messages, and the bot will respond accordingly.
-Directory Structure
-bash
-Copy code
-langbuddy/
-│
-├── langbuddy.py             # Main bot script
-├── docker-compose.yaml       # Docker configuration for PostgreSQL
-└── requirements.txt          # Python package dependencies
-Notes
-Ensure you have enabled the Google Cloud APIs for Speech-to-Text and Text-to-Speech, and have set up your credentials properly.
-Make sure your PostgreSQL connection details are correctly set in DATABASE_URL in the langbuddy.py script.
+   ```bash
+   git clone <repository-url>
+   cd <repository-directory>
+
+2. Create a virtual environment and activate it:
+
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+
+3. Install the required packages:
+
+   ```bash
+   pip install -r requirements.txt
+
+4. Create a .env file in the root directory with the following variables:
+
+   ```bash
+   OPENAI_API_KEY=<your_openai_api_key>
+   TELEGRAM_KEY=<your_telegram_bot_token>
+
+5. Set up the PostgreSQL database. You can use the provided docker-compose.yaml to set up PostgreSQL:
+
+   ```bash
+   docker-compose up -d
+
+6. Usage:
+
+   ```bash
+   python langbuddy.py
+
+Once the bot is running, you can send a voice message to interact with it. The bot will respond with a voice message in return.
