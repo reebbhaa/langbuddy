@@ -13,6 +13,7 @@ from sqlalchemy import create_engine, Text, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, DeclarativeBase, mapped_column, Mapped
 from datetime import datetime, timezone
+from test_llamaindex import generate_response_with_tools
 
 load_dotenv()
 
@@ -104,8 +105,9 @@ async def handle_all(update: Update, context: CallbackContext):
                 you are fun and playful too."
             print("user_context")
             print(user_context)
-            response_text = await generate_response(transcript, user_context) 
-            print("response_text")
+            # response_text = await generate_response(transcript, user_context) 
+            response_text = await generate_response_with_tools(transcript, user_context) 
+            print("response text")
             print(response_text)
             # Update the context after the response
             store_user_context(db, user_id, response_text)
@@ -220,7 +222,6 @@ def convert_audio_to_text(audio_file):
 
 def main():    
     app = ApplicationBuilder().token(telegram_key).build()
-
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.ALL, handle_all))
     app.run_polling()
