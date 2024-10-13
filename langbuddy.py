@@ -87,7 +87,6 @@ async def handle_all(update: Update, context: CallbackContext):
     elif message.video:
         await update.message.reply_text("You sent a video.")
     elif message.voice:
-        # await update.message.reply_text("You sent a voice message.")
         voice_id = update.message.voice.file_id  
         await (await context.bot.getFile(voice_id)).download_to_drive(f"{voice_id}.ogg")
         transcript=convert_audio_to_text(f"{voice_id}.ogg")
@@ -103,8 +102,10 @@ async def handle_all(update: Update, context: CallbackContext):
                 whenever you can. Try to learn about me, help\
                 me learn things about you. Your name is chatterbot,\
                 you are fun and playful too."
+            print("user_context")
             print(user_context)
             response_text = await generate_response(transcript, user_context) 
+            print("response_text")
             print(response_text)
             # Update the context after the response
             store_user_context(db, user_id, response_text)
@@ -150,11 +151,12 @@ async def send_voice_clip(update: Update, context: CallbackContext, text_respons
     mp3_path = convert_text_to_speech(text_response)
 
     # Step 2: Convert the MP3 file to OGG format for Telegram
-    ogg_path = convert_mp3_to_ogg(mp3_path)
+    # ogg_path = convert_mp3_to_ogg(mp3_path)
 
     # Step 3: Send the OGG file as a voice message
     with open(ogg_path, 'rb') as ogg_file:
-        await update.message.reply_voice(voice=ogg_file)
+        # await update.message.reply_voice(voice=ogg_file)
+        await update.message.reply_voice(voice=mp3_path)
 
 def get_context(user_input):
 
@@ -211,6 +213,7 @@ def convert_audio_to_text(audio_file):
     transcription = ""
     for result in response.results:
         transcription += result.alternatives[0].transcript
+    print("transcription")
     print(transcription)
     return transcription
 
