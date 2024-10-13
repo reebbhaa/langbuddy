@@ -3,8 +3,10 @@ bin/*
 include/*
 lib/*
 lib64
-venv/*
+venv*
 converted_audio.wav
 output.mp3
 output.ogg
 chitchatchitchat-90750f138145.json
+past_searches/
+__*
