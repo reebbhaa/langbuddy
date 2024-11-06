@@ -103,6 +103,8 @@ async def handle_all(update: Update, context: CallbackContext):
             print("user_context")
             print(user_context)
             response_text = await generate_response(transcript, user_context) 
+            response_text = await generate_response(f"Rewrite this so it is in simple english, \
+            so that a person with a limited vocabulary of 100 basic words is able to understand it.",response_text, )
             print("response_text")
             print(response_text)
             # Update the context after the response
